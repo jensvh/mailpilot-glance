@@ -1,0 +1,76 @@
+{
+  "device": "abc123",
+  "key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  "items": [
+    {
+      "direction": "down",
+      "plain": "{\u0022t\u0022:\u0022attention\u0022,\u0022attention\u0022:{\u0022version\u0022:\u00220123456789ab\u0022,\u0022atDesk\u0022:false,\u0022inMeeting\u0022:true,\u0022waiting\u0022:3,\u0022counts\u0022:{\u0022running\u0022:1,\u0022review\u0022:2,\u0022failed\u0022:0},\u0022cards\u0022:[{\u0022id\u0022:\u0022ask:req-1\u0022,\u0022version\u0022:\u0022a1b2c3d4\u0022,\u0022kind\u0022:\u0022permission\u0022,\u0022run\u0022:\u00226f1c2d8e-0000-4000-8000-000000000001\u0022,\u0022headline\u0022:\u0022List outdated packages?\u0022,\u0022line\u0022:\u0022Atlas import fix \\u00B7 4:12\u0022,\u0022speak\u0022:\u0022The agent wants to run dotnet list, to list outdated packages, for the Atlas import fix.\u0022,\u0022options\u0022:[{\u0022key\u0022:\u0022allow\u0022,\u0022label\u0022:\u0022Allow once\u0022,\u0022primary\u0022:true,\u0022words\u0022:[\u0022allow\u0022,\u0022yes\u0022,\u0022ja\u0022]},{\u0022key\u0022:\u0022no\u0022,\u0022label\u0022:\u0022No\u0022,\u0022primary\u0022:false,\u0022words\u0022:[\u0022no\u0022,\u0022nee\u0022]}],\u0022takesWords\u0022:false,\u0022until\u0022:\u00222026-11-18T11:11:40\u002B00:00\u0022,\u0022deskOnly\u0022:false,\u0022since\u0022:\u00222026-11-18T11:06:00\u002B00:00\u0022},{\u0022id\u0022:\u0022q:6f1c2d8e-0000-4000-8000-000000000002:1:0\u0022,\u0022version\u0022:\u0022e5f6a7b8\u0022,\u0022kind\u0022:\u0022question\u0022,\u0022run\u0022:\u00226f1c2d8e-0000-4000-8000-000000000002\u0022,\u0022headline\u0022:\u0022Which date format?\u0022,\u0022line\u0022:\u0022Question 1 of 2 \\u00B7 Atlas export\u0022,\u0022speak\u0022:\u0022The agent asks, for Atlas export: Which date format? It suggests: ISO 8601.\u0022,\u0022options\u0022:[{\u0022key\u0022:\u00221\u0022,\u0022label\u0022:\u0022ISO 8601\u0022,\u0022primary\u0022:true,\u0022words\u0022:[\u0022iso 8601\u0022,\u00221\u0022]},{\u0022key\u0022:\u0022decide\u0022,\u0022label\u0022:\u0022Let it decide\u0022,\u0022primary\u0022:false,\u0022words\u0022:[\u0022let it decide\u0022]}],\u0022takesWords\u0022:true,\u0022step\u0022:1,\u0022steps\u0022:2,\u0022deskOnly\u0022:false,\u0022since\u0022:\u00222026-11-18T10:50:00.123\u002B00:00\u0022}]},\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000000,\u0022b\u0022:\u0022MIcfDean4Q1abyS2QAeuuujxbzreGNns3H2mqdOfVKuwMi3D0Xxtj4PVQifxoe/n7YbiJXl58la4fV44keV\\u002Bknq95EGGtNAQKpdqwWg3MJkQD\\u002B5L6sFE5B9j95YIAkF5njhkt4gCeRTSAjfhAneN1NXBmH241/8xdLm\\u002BvI7swWpTaDzP8zWbxOAkUh5Fpgn3/JokT3ZFoyE8XgegA04wJiApuaUAgwp2mPcDgzMPpoKLWyuZWFDm4E0aPKe01F2AlIF4MVYsNm4cBZys9iOREIubkhySkJQql9g7Ys12Mf9yegiQnn951wn8bhNUkL7ql1g30R23VgjoTfKn3s1GNTleRkhYdC770t/Z2/V\\u002BHhAcpoLHX8Ku0utdaAD7FouWqzG1GNVnCMeZ48V9Xyf5X\\u002Babpw844Yr6fYXps9YQOmlNHhNfqJqXuwShmvED\\u002BM/LW4iaBCMmMWDbDz9aAOhFs5ph9uDRIsRHpjotCsg5TAWTsMkVrwUQ08p/9HaPd\\u002BOzjQlZf1WJuQ1ipQZR4XrfBOzVj\\u002BXkx9lMNJ7UNP6q2g59wbuSTgIAWvgvhLIKFyP\\u002BlBs78YBWZ6sIFZ5n2zVpUxDcJaZ1FRoYpcfvoPMWKmzP12jmgpg/8emXgzMhkrw\\u002BlPy6RU9JQSi\\u002B\\u002B9LaMrtQTmCVsWTKKT6jxWuXOlwVkvJHhe2/RTvsE\\u002BArv0evB1Mi/xTnocDssep52mDa5axtun55ZPQ3UD/Rs8gK0ipA8FUmFa1I2YKLlqcjAWl7PlYvK6TghR07e7pYw9KMWsN/OYB48TQ4vmu5OwIbpUW8M0PEYb6et2UoDWzObpI5EMt266XOqozpD\\u002BPy\\u002Bq6SPVAA1Vsnwt4OsZC4EyzemYHkSvxVHuHbnJMVTk89YrFUFSjMSuKjD\\u002BzbJJ4uxMMgjCHMLmg6ZPN3Dp5YerxIcmv73vCKBtNmDV6Ktk9Ikarmfy2ZRqTqwup2\\u002BpxGSznNQC7NEaO2WTKVo4maixC9vhZuRKyqYnL4psDyl\\u002B2DL\\u002BWqas6bCKWJefOibARCOLOn/kmM3kLHLdovx\\u002BJsU5aHKEySw1Ade8nszjRx2M9cVoppK7Ectrvu2ORNIQmQYVShVI0XHVSgUo5Y6aRXkfLksAtLBV7UK\\u002BOf/IiEQp7VKNHj6jECU/bWyKvjulVLD6wVrlj4nvK5JrrZYiJYIXyGAwG/uA\\u002BTzLPon7cWQ5VMJIo/zVPhvNH0PSjRff0aRPCOX5YigkjgDUQrVY6mRljg0CPV4HHWAZbkRkyefr9Cu3umxDlC7i76PoW7g8/gR0OL67Qrw5zx\\u002Bzmyooz8hT5I1ByOrVCbDulMx4kVojnr65eTtHrYVPBWN4Ksz8wEBKY4gcuoGuHcks27xbE7TmOIE7TH\\u002BEFQMjqO5zITq/TxACFuOxv1iyEJH2lAxyX8cDvqilovv\\u002B0VDbuSFFkJMKYazaeINufRQcKTwqY0UGS8WzJuhaXxj5ur350NBRfgiZfE3EGEU11vjYeXb7z\\u002B36jlmY\\u002BJI0dMjz8Aw/PvKljMzaXWvnrM5drbY9NscKU95bzkYEoAQY8JRqDaGvj72lf2mHVlV\\u002BWsJ6HXckTc05lN28/Wl51lqzE9TCJGlJBYZdSVXF7kZ6cWy/p7bAvgqLsNonvRRz5nl7HpcUC1CAnTBHvtfL7B9b8/1zCUQi5rwgydmcajL0enLDukNmaKZYOXNLcBOM/n8AFo41d3vxiaTg==\u0022}"
+    },
+    {
+      "direction": "down",
+      "plain": "{\u0022t\u0022:\u0022attention\u0022,\u0022attention\u0022:{\u0022version\u0022:\u0022ba9876543210\u0022,\u0022atDesk\u0022:true,\u0022inMeeting\u0022:false,\u0022waiting\u0022:0,\u0022counts\u0022:{\u0022running\u0022:0,\u0022review\u0022:0,\u0022failed\u0022:0},\u0022cards\u0022:[]},\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000001,\u0022b\u0022:\u0022eFN5D945i9W/3q\\u002BqDN55\\u002B7WC46SL4TFaAqBI9\\u002BB4pRZaSUebs1NChOxAjl6AYARCqau4nRqZTwv0PCycphAf12U68ucKShiYXlx2Yvqn3m1lcXRRr3eYxe0BWW/F0wQ2l1R8mupT4OnAx8aVRIoGNxjqYUtX8U1YBmWX5hwM7Gdmp10SzX8DiaOQCo3P4Jylt11vLf6zh7a1MIbWk0DP10VriJr\\u002BwXnFtxUcQ\\u002BagECZWxpYE5C3kjgEeE1TPKQ==\u0022}"
+    },
+    {
+      "direction": "down",
+      "plain": "{\u0022t\u0022:\u0022attention-done\u0022,\u0022id\u0022:\u0022ask:req-1\u0022,\u0022text\u0022:\u0022Allowed once\u0022,\u0022ok\u0022:true,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000002,\u0022b\u0022:\u0022xaAdJc/VdbT0KYa4HU3wkNqebmq4OGVI695yDCOlTyz6XkJcdtNvXl/Vuo/p997cNtoxuok9pLMKxvcdJdGiRH9cEsQJ37iTmLbYeplSm9RYyBP1sqsC7J\\u002BKvHEHDwukSj6fwku5QEkr\u0022}"
+    },
+    {
+      "direction": "down",
+      "plain": "{\u0022t\u0022:\u0022attention-done\u0022,\u0022id\u0022:\u0022ask:req-1\u0022,\u0022text\u0022:\u0022The agent isn\\u0027t waiting on this any more.\u0022,\u0022ok\u0022:false,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000003,\u0022b\u0022:\u0022GvSZopVlhMF9VMlLtYxLAVdV6JXC1Jmut1563Qc9pY56CF2PDX8X8k1XTPHQu1yG3Vm8S6OUUgMTzsRg1IQId73Ps0T1SOehIXcU4WLFU359eRuNOkirGBv7U4ghOFdWCjozkjLGIb/iFHeVEYOWpXGaloIRP3hUbahbOOInvHb/VX7HW4DsXpNxtEs=\u0022}"
+    },
+    {
+      "direction": "down",
+      "plain": "{\u0022t\u0022:\u0022pong\u0022,\u0022n\u0022:9,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000004,\u0022b\u0022:\u0022l/ii/4etZ4qt8B80XA7GyCdKA5\\u002BkYes\\u002B6rTAIsVgWS/herGHCoBnESnwTAidmKxQnsclow==\u0022}"
+    },
+    {
+      "direction": "down",
+      "plain": "{\u0022t\u0022:\u0022paired\u0022,\u0022device\u0022:\u0022abc123\u0022,\u0022key\u0022:\u0022AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=\u0022,\u0022relay\u0022:\u0022wss://relay.example/client/hubs/mailpilot?access_token=x\u0022,\u0022speechUrl\u0022:\u0022https://stt.example\u0022,\u0022speechKey\u0022:\u0022made-up-speech-key\u0022,\u0022host\u0022:\u0022PC\u0022,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000005,\u0022b\u0022:\u0022SAsDtlUQT6YytibJXABUHWvCiT5NnwRCI9QYFx0GW0ve9Vr6mj22s7GXO2BaBfQ3X7nS8UAI9UAaUtjm6r6W45hXi6/oeb10LUFq9A40JNWW3IP1K8FSg4TcyznLNTKt/zoX2cSoULvgpe11aI6xqzGpcDjA/bm1mhWZGgSffG\\u002By9W5M84IOSU3A52bwi1BSwN1cEjlYrwVUd9fnFsYqfxwelkkfi4POC5LTm/y3V\\u002B/Xrohf\\u002BkWpg8sae6hLMF4ZoqJbu8inGKuj\\u002BRqHijExI9DAoZ15lGIPPfoiMK6UgWU4wqhQ3NV60PNlK8CApRms5dOHjynEdzx4G\\u002BU5GpHPS/9ZfIraoRUa7Q==\u0022}"
+    },
+    {
+      "direction": "down",
+      "plain": "{\u0022t\u0022:\u0022config\u0022,\u0022relay\u0022:\u0022wss://relay.example/client/hubs/mailpilot?access_token=y\u0022,\u0022speechUrl\u0022:\u0022https://stt.example\u0022,\u0022speechKey\u0022:\u0022made-up-speech-key\u0022,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000006,\u0022b\u0022:\u0022xJ7QW\\u002Bfo453AAf6oM0U90f6NNygKcjq4/c3PacJqQwJ/p3QnZehzHWxSsUfqYM6QS\\u002BxKB1UZNbDVqyhzdMkRlu43wqQB1tSXgmhpRtwgDwa9pfrkClSudmCj4K2ZSuTWXeWmWDNBxbvVeLLhbJXwqkXUqPS7ELZD3YP/\\u002BPCfL/OQ2Yid3jCFQZaLb0T5I9X0lPfDGvqeODe1u42mI7MObzHTDZCxQR3Qx/HGn8zJWCXtIa9pklc=\u0022}"
+    },
+    {
+      "direction": "up",
+      "plain": "{\u0022t\u0022:\u0022hello\u0022,\u0022device\u0022:\u0022abc123\u0022,\u0022app\u0022:\u00220.1.0 (1)\u0022,\u0022language\u0022:\u0022nl\u0022,\u0022fresh\u0022:false,\u0022can\u0022:[\u0022attention\u0022],\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000007,\u0022b\u0022:\u0022JanhM1Xnc\\u002BsaNZArQOn\\u002BkplA6o3SUtAhmHHlqQyM4Tg0skVm5o\\u002BLnGIt3iQ8iiljpjZX/pidfplioacKB4PGD90luon\\u002Bhh8/V1amzyKRIEqlBX1W\\u002BvsOjrMSIo3Ns8/cZrMCiZJQzINeeTNrFS66wmyfnzbW/vtk1PAkKV3Td3B4rJp4ZQ==\u0022}"
+    },
+    {
+      "direction": "up",
+      "plain": "{\u0022t\u0022:\u0022ping\u0022,\u0022n\u0022:7,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000008,\u0022b\u0022:\u0022nXZfYYwPvVxdbD\\u002BqgrGkGeLSSoXuPsoHHOCKxGxpIABvZtRQkxejPc\\u002BSkS0wO6/A5BQRig==\u0022}"
+    },
+    {
+      "direction": "up",
+      "plain": "{\u0022t\u0022:\u0022pair\u0022,\u0022name\u0022:\u0022iPhone\u0022,\u0022app\u0022:\u00220.1.0 (1)\u0022,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000009,\u0022b\u0022:\u0022nJaqYjYvZCGflhoqNfI/p1SGhB8Ql/LbSrzGN\\u002BBBbf16GJoAd0xRCwTAlRpI/DlDkMFjSSJR71xjbAYwcCb6kW7cYNVWk\\u002BiT4k5snpNKBO4=\u0022}"
+    },
+    {
+      "direction": "up",
+      "plain": "{\u0022t\u0022:\u0022attention-act\u0022,\u0022id\u0022:\u0022ask:req-1\u0022,\u0022option\u0022:\u0022allow\u0022,\u0022version\u0022:\u0022a1b2c3d4\u0022,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000010,\u0022b\u0022:\u0022OSVH5Xv0PB466xCctrQkpSF/y7nSS\\u002BRnHD7s0GSPR0JHLT5nuuiYhNk9cvuYcThJAUH40/LLXJMRZyI2dElLOfmozmUgxRWzZrzNaNUG44iW43MPtH3iW0R5nZpgh8TzQUWzpfWgI/W3XmRTYvI=\u0022}"
+    },
+    {
+      "direction": "up",
+      "plain": "{\u0022t\u0022:\u0022attention-act\u0022,\u0022id\u0022:\u0022q:6f1c2d8e-0000-4000-8000-000000000002:1:0\u0022,\u0022words\u0022:\u0022week numbers\u0022,\u0022version\u0022:\u0022e5f6a7b8\u0022,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000011,\u0022b\u0022:\u0022sX0r57\\u002BCKxhJNo99PrVgkjHbf7dH5NNNFsqToae8qdkMjtNLbxXaBHeQA10y3Wy396ap0t9K\\u002B7VPUBE72b3IwH73bhgI23EfdgTe/Kq1dJcx0p4KXYVbk6cADmrCG69U4t\\u002BTYU1Fa9H3xDA0br2xznX/BOVbN4vnKmr3lUQ1BgMrcNWcmmmIQ5iD9Rbx\\u002BnSA\\u002BlRtRtE=\u0022}"
+    },
+    {
+      "direction": "up",
+      "plain": "{\u0022t\u0022:\u0022attention-later\u0022,\u0022id\u0022:\u0022ask:req-1\u0022,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000012,\u0022b\u0022:\u0022NSRdqTzxpqRRmjyQwgJktyIWlKhpaEe0dwdeLxK4RRKyFdt4MoMs46ovgis93W71vgmvAYsg80jDz46cV\\u002BwKZIVXeWGEq5GJJ6M=\u0022}"
+    },
+    {
+      "direction": "up",
+      "plain": "{\u0022t\u0022:\u0022attention-seen\u0022,\u0022id\u0022:\u0022ask:req-1\u0022,\u0022v\u0022:1}",
+      "sealedText": "{\u0022v\u0022:1,\u0022d\u0022:\u0022abc123\u0022,\u0022n\u0022:1795000000013,\u0022b\u0022:\u0022J4WXyMjaGCXEXRPWr0Yt92alXqtb0ZK\\u002BtXlOpE9Uc4/0n4RL3xr1Ixfg0DHaWQP4ZaZH75naWWmMMvnWgYwSE66dJzHtuX1PAQ==\u0022}"
+    }
+  ]
+}
