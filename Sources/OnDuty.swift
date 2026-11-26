@@ -11,14 +11,34 @@ import UIKit
 /// microphone opens for a few seconds for your answer. Answered or put off,
 /// the lens goes dark again.
 ///
-/// Off duty, the phone's own screen still shows the cards and takes answers.
+/// Off duty, the phone's own screen still shows the cards and takes answers. With
+/// the app closed or in the background off duty, MailPilot notifies the phone
+/// through the ntfy app instead, and a tap on that notification opens the cards
+/// here (mailpilotglance://cards).
 @MainActor
 final class OnDuty: ObservableObject {
     enum Stage: String {
         case off, starting, on, ending
     }
 
-    @Published private(set) var stage: Stage = .off
+    /// The links this app opens: a pairing code, and the cards (a tapped notification).
+    enum Links {
+        static let pair = "pair"
+        static let cards = "cards"
+    }
+
+    @Published private(set) var stage: Stage = .off {
+        // On duty, the phone watches: MailPilot needs to notify it of nothing.
+        didSet {
+            if (oldValue == .on) != (stage == .on) { link.sendWatching() }
+        }
+    }
+
+    /// The app is on the screen: what comes shows here, so MailPilot needs to notify of nothing.
+    @Published private(set) var inFront = false
+
+    /// This phone shows what waits now: on duty, or the app on the screen.
+    var watching: Bool { stage == .on || inFront }
     /// Why going on duty didn't work, or what to do first.
     @Published private(set) var banner: String?
     /// What the lens shows, in a few words, for the phone's status strip.
@@ -48,6 +68,7 @@ final class OnDuty: ObservableObject {
 
     private func wire() {
         link.language = { [weak self] in self?.settings.spokenLanguage }
+        link.watching = { [weak self] in self?.watching ?? false }
         link.onAttention = { [weak self] attention in self?.attentionChanged(attention) }
         link.onDone = { [weak self] done in self?.answered(done) }
         ears.speechServer = { [weak self] in self?.link.speech }
@@ -58,13 +79,22 @@ final class OnDuty: ObservableObject {
         observers.append(center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in
                 Log.say("app in front")
+                // In front before the link wakes, so its hello already says the phone watches.
+                self?.inFront = true
                 self?.link.wake()
                 self?.glasses.refreshDevice()
             }
         })
+        observers.append(center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            // Also on the first launch, which has no "enter foreground".
+            Task { @MainActor in self?.setFront(true) }
+        })
         observers.append(center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in
-                Log.say(self?.isOn == true ? "app in the background (on duty goes on)" : "app in the background (off duty)")
+                guard let self else { return }
+                Log.say(self.isOn ? "app in the background (on duty goes on)" : "app in the background (off duty: MailPilot notifies)")
+                self.inFront = false
+                if !self.isOn { self.tellNotWatching() }
             }
         })
         observers.append(center.addObserver(forName: UIApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
@@ -72,9 +102,46 @@ final class OnDuty: ObservableObject {
         })
     }
 
-    /// A link the app was opened with: a pairing code, or the Meta AI app's answer.
+    /// A link the app was opened with: a tapped notification, a pairing code, or the Meta AI app's answer.
     func open(_ url: URL) {
+        if url.scheme == LensInvite.scheme {
+            switch url.host {
+            case Links.cards:
+                // The notification said something waits: get it now, the most urgent first.
+                Log.say("opened from a notification")
+                setFront(true)
+                cards.showFirst()
+                link.wake()
+                return
+            case Links.pair:
+                _ = link.open(url)
+                return
+            default:
+                break
+            }
+        }
         if !link.open(url) { glasses.handle(url) }
+    }
+
+    // MARK: Watching
+
+    private func setFront(_ front: Bool) {
+        guard inFront != front else { return }
+        inFront = front
+        link.sendWatching()
+    }
+
+    /// The app goes to the background off duty: MailPilot is told before iOS suspends the app, so it notifies from
+    /// now on. If the message doesn't make it, MailPilot stops counting this phone after 70 seconds of silence.
+    private func tellNotWatching() {
+        let task = BackgroundTime()
+        task.id = UIApplication.shared.beginBackgroundTask(withName: "Glance: not watching") {
+            MainActor.assumeIsolated { task.end() }
+        }
+        Task { @MainActor [weak self] in
+            _ = await self?.link.sendWatchingNow()
+            task.end()
+        }
     }
 
     // MARK: On and off duty
@@ -158,7 +225,13 @@ final class OnDuty: ObservableObject {
     private func attentionChanged(_ attention: Attention) {
         let fresh = cards.take(attention)
         Log.say("cards: \(attention.cards.count) to show, \(attention.waiting) waiting elsewhere\(attention.atDesk ? ", at the desk" : "")\(attention.inMeeting ? ", in a meeting" : "")")
-        guard isOn else { return }
+        guard isOn else {
+            // Off duty with the app on the screen: a tap of the phone, since MailPilot sends no notification then.
+            if inFront, !fresh.isEmpty {
+                UINotificationFeedbackGenerator().notificationOccurred(.warning)
+            }
+            return
+        }
         if let card = cards.card, fresh.contains(where: { $0.id == card.id }) {
             announce(card)
         } else {
@@ -325,5 +398,17 @@ final class OnDuty: ObservableObject {
     func reopenLens() {
         shown = nil
         render()
+    }
+}
+
+/// The few seconds iOS gives an app going to the background, ended once (when the work is done, or when time is up).
+@MainActor
+private final class BackgroundTime {
+    var id = UIBackgroundTaskIdentifier.invalid
+
+    func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
     }
 }

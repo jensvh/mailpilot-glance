@@ -99,6 +99,10 @@ struct LensConfig: Decodable, Equatable {
     var relay: String?
     var speechUrl: String?
     var speechKey: String?
+    /// The ntfy server the phone's notifications come through, and the topic to subscribe to in the ntfy app. Both
+    /// missing while MailPilot's notifications are off or not set up.
+    var notifyServer: String?
+    var notifyTopic: String?
 }
 
 enum LensDown: Equatable {
@@ -168,6 +172,9 @@ enum LensUp {
     case later(id: String)
     /// The card was on the lens.
     case seen(id: String)
+    /// Whether this phone shows what waits right now (on duty, or the app in front): while it does, MailPilot sends no
+    /// notification. It counts only while the phone is heard from.
+    case watching(Bool)
 
     var kind: String {
         switch self {
@@ -177,6 +184,7 @@ enum LensUp {
         case .act: return "attention-act"
         case .later: return "attention-later"
         case .seen: return "attention-seen"
+        case .watching: return "watch"
         }
     }
 
@@ -202,6 +210,8 @@ enum LensUp {
             out["version"] = version
         case .later(let id), .seen(let id):
             out["id"] = id
+        case .watching(let on):
+            out["on"] = on
         }
         return out
     }

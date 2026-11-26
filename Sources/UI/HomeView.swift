@@ -106,13 +106,37 @@ struct HomeView: View {
 
     private var dutyHint: String {
         if !link.paired { return "Pair this phone with MailPilot first: Settings." }
-        return duty.isOn
-            ? "When an agent waits on you, you hear it and see it on the lens. Lock the phone and put it away. Tap to go off duty."
-            : "Off duty, nothing rings: the cards only show here."
+        if duty.isOn {
+            return "When an agent waits on you, you hear it and see it on the lens. Lock the phone and put it away. Tap to go off duty."
+        }
+        return link.notify == nil
+            ? "Off duty, nothing rings: the cards only show here. Notifications can be set up in Settings."
+            : "Off duty, the ntfy app notifies you when an agent waits; a tap brings you here."
     }
 
-    /// Nothing waits: what MailPilot counts, and why it may be quiet.
+    /// Nothing waits: what MailPilot counts, and why it may be quiet. Not before MailPilot said so: opened from a
+    /// notification, the link may still be connecting.
+    @ViewBuilder
     private var quiet: some View {
+        if link.paired, link.status == .connecting {
+            HStack(spacing: 10) {
+                ProgressView()
+                Text("Getting what waits…").font(.title3.weight(.semibold))
+            }
+        } else if link.paired, !link.online {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Not connected to MailPilot", systemImage: "link.badge.plus")
+                    .font(.title3.weight(.semibold))
+                if let detail = link.status.detail {
+                    Text(detail).font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+        } else {
+            nothingWaits
+        }
+    }
+
+    private var nothingWaits: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Nothing waits on you", systemImage: "checkmark.circle")
                 .font(.title3.weight(.semibold))

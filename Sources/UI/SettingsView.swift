@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Pairing, the glasses' registration, how it reads and listens, and the log.
 struct SettingsView: View {
@@ -8,14 +9,21 @@ struct SettingsView: View {
     @EnvironmentObject private var glasses: Glasses
     @Environment(\.dismiss) private var dismiss
 
+    @Environment(\.openURL) private var openURL
+
     @State private var pasted = ""
     @State private var speechCheck = ""
     @State private var confirmUnpair = false
+    @State private var topicCopied = false
+
+    /// The ntfy app on the App Store (it has no link of its own to open it with).
+    private static let ntfyApp = URL(string: "https://apps.apple.com/app/id1625396347")!
 
     var body: some View {
         NavigationStack {
             Form {
                 pairing
+                notifications
                 glassesSection
                 voiceSection
                 diagnostics
@@ -65,6 +73,42 @@ struct SettingsView: View {
             Text("MailPilot")
         } footer: {
             Text("In MailPilot, open Glasses and choose Pair a phone. Scan the code with the iPhone camera: it opens this app. The code works once and for 10 minutes. Everything between this phone and MailPilot is encrypted with a key only the two of them have.")
+        }
+    }
+
+    // MARK: Notifications
+
+    private var notifications: some View {
+        Section {
+            if let notify = link.notify {
+                LabeledContent("Topic", value: "••••••" + String(notify.topic.suffix(4)))
+                if let own = notify.ownServer {
+                    LabeledContent("Server", value: own)
+                }
+                Button {
+                    UIPasteboard.general.string = notify.topic
+                    topicCopied = true
+                } label: {
+                    Label(topicCopied ? "Copied" : "Copy the topic", systemImage: topicCopied ? "checkmark" : "doc.on.doc")
+                }
+                Button {
+                    openURL(Self.ntfyApp)
+                } label: {
+                    Label("ntfy on the App Store", systemImage: "bell.badge")
+                }
+            } else {
+                Text(link.paired
+                     ? "Off in MailPilot. Turn them on there: Glasses, Notifications, Make a topic."
+                     : "Pair with MailPilot first.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Notifications")
+        } footer: {
+            Text(link.notify?.ownServer == nil
+                 ? "Off duty or with this app closed, MailPilot notifies you through the free ntfy app when an agent waits on you. Install ntfy, allow its notifications, then in ntfy: +, paste the topic, Subscribe. A notification only says what kind of thing waits; tap it to answer here. While you're on duty or have this app open, nothing is sent."
+                 : "Off duty or with this app closed, MailPilot notifies you through the free ntfy app when an agent waits on you. Install ntfy, allow its notifications, then in ntfy: +, paste the topic, choose Use another server and enter the server above, Subscribe. A notification only says what kind of thing waits; tap it to answer here. While you're on duty or have this app open, nothing is sent.")
         }
     }
 

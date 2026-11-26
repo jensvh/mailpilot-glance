@@ -49,6 +49,12 @@ final class Cards: ObservableObject {
         return fresh
     }
 
+    /// The most urgent card: what a tapped notification was about.
+    func showFirst() {
+        guard showingId != nil, heard == nil else { return }
+        showingId = nil
+    }
+
     /// The next card, round the list.
     func showNext() {
         guard cards.count > 1, let current = card, let at = cards.firstIndex(where: { $0.id == current.id }) else { return }

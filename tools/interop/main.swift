@@ -41,7 +41,9 @@ let mine: [String: [LensUp]] = [
                       .act(id: "q:6f1c2d8e-0000-4000-8000-000000000002:1:0", option: nil, words: "week numbers", version: "e5f6a7b8")],
     "attention-later": [.later(id: "ask:req-1")],
     "attention-seen": [.seen(id: "ask:req-1")],
+    "watch": [.watching(true), .watching(false)],
 ]
+var configs: [LensConfig] = []
 var used: [String: Int] = [:]
 var kinds = Set<String>()
 var attentions: [Attention] = []
@@ -78,6 +80,7 @@ for item in items {
             check(paired.device == "abc123" && Data(base64Encoded: paired.key) == key && paired.host == "PC", "down paired: device, key, host")
             check(paired.relay == "wss://relay.example/client/hubs/mailpilot?access_token=x" && paired.speechUrl == "https://stt.example" && paired.speechKey == "made-up-speech-key", "down paired: addresses")
         case .config(let config)?:
+            configs.append(config)
             check(config.relay == "wss://relay.example/client/hubs/mailpilot?access_token=y" && config.speechUrl == "https://stt.example" && config.speechKey == "made-up-speech-key", "down config: addresses")
         case nil:
             check(false, "down \(kind): the app can't read it")
@@ -128,8 +131,15 @@ if attentions.count == 2 {
 check(dones == [AttentionDone(id: "ask:req-1", text: "Allowed once", ok: true),
                 AttentionDone(id: "ask:req-1", text: "The agent isn't waiting on this any more.", ok: false)], "down attention-done: both read")
 
+// The notifications' address: missing while they are off in MailPilot, there when they are on.
+check(configs.count == 2, "down config: both read")
+if configs.count == 2 {
+    check(configs[0].notifyServer == nil && configs[0].notifyTopic == nil, "down config: no notifications")
+    check(configs[1].notifyServer == "https://ntfy.sh" && configs[1].notifyTopic == "glance-test-topic-0123456789", "down config: the notifications' server and topic")
+}
+
 for expected in ["down attention", "down attention-done", "down pong", "down paired", "down config",
-                 "up hello", "up ping", "up pair", "up attention-act", "up attention-later", "up attention-seen"] {
+                 "up hello", "up ping", "up pair", "up attention-act", "up attention-later", "up attention-seen", "up watch"] {
     check(kinds.contains(expected), "the file holds a \(expected)")
 }
 

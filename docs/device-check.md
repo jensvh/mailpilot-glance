@@ -42,3 +42,15 @@ The question that decides whether this works without Apple's push notifications.
 
 - With a MailPilot tab open and in use, let a permission question come. Nothing should ring. Leave it 90 seconds.
 - Found: quiet at the desk ___, came to the glasses after 90 s ___.
+
+## 7. Notifications off duty
+
+Set them up first: MailPilot's Glasses page, Notifications, Make a topic; Glance, Settings, Notifications, Copy the topic; ntfy, +, paste, Subscribe. Then Test on the Glasses page.
+
+- **Closed.** Close Glance (swipe it away), walk away from the PC, let a run wait on you. Expect one notification within about 15 seconds, time-sensitive for a permission question.
+- **The tap.** Tap it. Expect Glance to open (not ntfy, not Safari), say "Getting what waits…" for a moment, then show the card. This is the one thing nobody has seen yet: the ntfy app opens the `mailpilotglance://cards` link itself.
+- **Open.** With Glance on the screen, off duty: a new card gives a short buzz and no notification.
+- **On duty.** Go on duty and lock the phone: the card comes to the glasses and no notification comes.
+- **Cut.** On duty, put the phone in flight mode for two minutes, let a run wait, then turn flight mode off. Expect a notification (MailPilot stops counting a phone it doesn't hear from for 70 seconds).
+- **Reminder.** Let a permission question wait 5 minutes unanswered with Glance closed: one more "Still waiting" when its run goes on hold, then nothing.
+- Found: closed ___ s, opens Glance ___, buzz ___, quiet on duty ___, after the cut ___, reminder once ___.

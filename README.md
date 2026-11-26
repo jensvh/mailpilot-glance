@@ -72,6 +72,19 @@ Tap **Go on duty** with the app open (iOS only lets an app open the microphone w
 
 Tap **On duty** again to stop.
 
+## Off duty: notifications
+
+Without the glasses on, MailPilot tells you through a notification instead, so an agent never waits unnoticed. It goes through the free [ntfy](https://apps.apple.com/app/id1625396347) app, so no paid Apple account is needed.
+
+- **When.** An agent waits on you, you're away from the desk (or a permission question waited there 90 seconds), and no phone shows it: Glance is off duty and not on the screen. About 10 seconds after the card came; what was answered at the desk in those seconds is never mentioned.
+- **How often.** Each card once, at most one notification a minute (what comes in between goes with the next one), and one reminder when a permission question puts its run on hold. A card that came while you were on duty or had Glance open was shown there and is never notified.
+- **What it says.** Only the kind of thing: "An agent asks for permission", "2 things wait on you". Never the project, the command or the question: those stay between MailPilot and this app. Permission questions are time-sensitive, so they come through a Focus.
+- **A tap** opens Glance, which connects at once and shows the most urgent card. Answer it here as always.
+
+To set it up: on MailPilot's Glasses page, under Notifications, choose **Make a topic**. In Glance, Settings, Notifications, **Copy the topic**; in ntfy, tap **+**, paste it and Subscribe. **Test** on the Glasses page puts one on the phone.
+
+Glance tells MailPilot whether it watches (on duty, or on the screen) after every connect and whenever that changes. If the phone goes quiet without saying so, MailPilot stops counting it after 70 seconds and notifies.
+
 ## How it is built
 
 | Folder | What |
@@ -84,4 +97,4 @@ Tap **On duty** again to stop.
 | `tools/interop` | Messages sealed by MailPilot's own code; the build opens and reads them all. |
 | `tools/answer` | The answer rules, checked by the build. |
 
-The messages are MailPilot's link, version 1, with `can: ["attention"]` in the hello and no walk. MailPilot's `docs/AGENT-UNBLOCKER.md` describes them under "On the link".
+The messages are MailPilot's link, version 1, with `can: ["attention"]` in the hello, `watch` after it, and no walk. MailPilot's `docs/AGENT-UNBLOCKER.md` describes them under "On the link".

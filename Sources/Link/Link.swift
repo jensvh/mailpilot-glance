@@ -48,12 +48,25 @@ final class Link: ObservableObject {
     @Published private(set) var roundTripMs: Int?
     @Published private(set) var lastHeardFrom: Date?
     @Published private(set) var warning: String?
+    /// Where MailPilot's notifications come from, to subscribe to in the ntfy app; nil while they are off there.
+    @Published private(set) var notify: NotifyAddress?
+
+    struct NotifyAddress: Equatable {
+        var server: String
+        var topic: String
+
+        /// The server as the ntfy app asks for it: nothing when it is ntfy.sh, its default.
+        var ownServer: String? { URL(string: server)?.host == "ntfy.sh" ? nil : server }
+    }
 
     var onAttention: ((Attention) -> Void)?
     var onDone: ((AttentionDone) -> Void)?
     var onStatusChanged: (() -> Void)?
     /// The language to tell MailPilot ("en", "nl"); nil leaves it to MailPilot.
     var language: () -> String? = { nil }
+    /// Whether this phone shows what waits now (on duty, or the app in front). Told to MailPilot after every hello and
+    /// whenever it changes: while it does, MailPilot sends no notification.
+    var watching: () -> Bool = { false }
 
     private var device: String?
     private var envelope: LensEnvelope?
@@ -67,10 +80,17 @@ final class Link: ObservableObject {
     private var pingSentAt: [Int: Date] = [:]
     private var unanswered = 0
 
-    private static let keys = ["device", "key", "relay", "host", "speechUrl", "speechKey"]
+    private static let keys = ["device", "key", "relay", "host", "speechUrl", "speechKey", "notifyServer", "notifyTopic"]
+
+    /// Not heard from MailPilot for this long (it answers a ping every 25 seconds), an open-looking connection is
+    /// taken for dead when the app comes to the front.
+    private static let stale: TimeInterval = 30
 
     init() {
         host = Keychain.read("host")
+        if let server = Keychain.read("notifyServer"), let topic = Keychain.read("notifyTopic"), !topic.isEmpty {
+            notify = NotifyAddress(server: server, topic: topic)
+        }
         if let id = Keychain.read("device"),
            let key = Keychain.read("key").flatMap({ Data(base64Encoded: $0) }),
            let made = LensEnvelope(device: id, key: key) {
@@ -101,10 +121,19 @@ final class Link: ObservableObject {
         if paired, relay == nil { connect() }
     }
 
-    /// The app came to the front: don't wait out a retry pause.
+    /// The app came to the front, or a notification was tapped: get what waits now. Not connected, it doesn't wait
+    /// out a retry pause; connected but silent for a while (the phone slept, the socket may be dead), it connects
+    /// again; otherwise a hello brings the cards as they are.
     func wake() {
-        guard paired, let relay, !relay.connected else { return }
-        relay.reconnect("The app is in front again; connecting.")
+        guard paired, let relay else { return }
+        if !relay.connected {
+            relay.reconnect("The app is in front again; connecting.")
+        } else if let last = lastHeardFrom, Date().timeIntervalSince(last) > Self.stale {
+            setStatus(.connecting)
+            relay.reconnect("Nothing heard from MailPilot for a while; connecting again.")
+        } else {
+            sayHello()
+        }
     }
 
     private func connect() {
@@ -154,10 +183,27 @@ final class Link: ObservableObject {
 
     // MARK: Sending
 
-    /// Tells MailPilot this phone is here; it answers with the cards.
+    /// Tells MailPilot this phone is here, and whether it watches; it answers with the cards.
     func sayHello() {
         guard let device else { return }
         send(.hello(device: device, app: Self.appVersion, language: language()))
+        send(.watching(watching()))
+    }
+
+    /// Tells MailPilot whether this phone shows what waits now.
+    func sendWatching() {
+        let on = watching()
+        if send(.watching(on)) { Log.say("link: watching \(on ? "on" : "off")") }
+    }
+
+    /// The same, waiting until the relay took it: for the moment before the app is suspended.
+    func sendWatchingNow() async -> Bool {
+        let on = watching()
+        guard let device, let envelope, let relay, relay.connected,
+              let sealed = envelope.seal(.up, LensUp.watching(on).json(), at: outgoing.next()) else { return false }
+        let taken = await relay.sendAcked(group: LensGroups.up(device), data: sealed) == true
+        Log.say("link: watching \(on ? "on" : "off")\(taken ? "" : " (not confirmed)")")
+        return taken
     }
 
     /// Sends a message to MailPilot, sealed. False when not connected: the message is gone.
@@ -206,6 +252,21 @@ final class Link: ObservableObject {
             if let address = config.relay, !address.isEmpty { Keychain.write("relay", address) }
             if let url = config.speechUrl { Keychain.write("speechUrl", url) }
             if let key = config.speechKey { Keychain.write("speechKey", key) }
+            // The notifications' address comes with every config; none means they are off in MailPilot.
+            let address = config.notifyTopic.flatMap { topic in
+                topic.isEmpty ? nil : NotifyAddress(server: config.notifyServer ?? "https://ntfy.sh", topic: topic)
+            }
+            if address != notify {
+                if let address {
+                    Keychain.write("notifyServer", address.server)
+                    Keychain.write("notifyTopic", address.topic)
+                } else {
+                    Keychain.delete("notifyServer")
+                    Keychain.delete("notifyTopic")
+                }
+                notify = address
+                Log.say("link: notifications \(address == nil ? "off in MailPilot" : "set up")")
+            }
         case .paired:
             break
         }
@@ -341,6 +402,7 @@ final class Link: ObservableObject {
         host = nil
         attention = nil
         roundTripMs = nil
+        notify = nil
         setStatus(.unpaired)
     }
 }
