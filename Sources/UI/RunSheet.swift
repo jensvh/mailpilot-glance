@@ -200,12 +200,12 @@ struct RunSheet: View {
             guard !off else { return }
             if act == "prompt" { prompt() } else { send(act) }
         } label: {
-            VStack(spacing: 5) {
-                Image(systemName: off ? "lock.fill" : look.icon).font(.system(size: 17, weight: .semibold))
-                Text(look.label).font(.system(size: 12, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+            HStack(spacing: 7) {
+                Image(systemName: off ? "lock.fill" : look.icon).font(.system(size: 14, weight: .semibold))
+                Text(look.label).font(.system(size: 14, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.75)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 13)
             .foregroundStyle(off ? Theme.faint : act == "stop" ? Theme.red : Theme.text)
             .background(RoundedRectangle(cornerRadius: Theme.radiusSmall, style: .continuous).fill(Theme.panel))
         }

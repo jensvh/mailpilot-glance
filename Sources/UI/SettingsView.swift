@@ -58,8 +58,8 @@ struct SettingsView: View {
                         Text(id).font(.system(size: 14, design: .monospaced)).foregroundStyle(Theme.muted)
                     }
                 }
-                Button(role: .destructive) { confirmUnpair = true } label: {
-                    Label("Forget this pairing", systemImage: "trash")
+                Button { confirmUnpair = true } label: {
+                    name("trash", Theme.red, "Forget this pairing", words: Theme.red)
                 }
                 .confirmationDialog("Forget the pairing with MailPilot?", isPresented: $confirmUnpair, titleVisibility: .visible) {
                     Button("Forget", role: .destructive) { shell.unpair() }
@@ -74,9 +74,11 @@ struct SettingsView: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
             if !pasted.isEmpty {
-                Button(shell.pairingBusy ? "Pairing…" : "Pair with this link") {
+                Button {
                     shell.pair(pasted)
                     pasted = ""
+                } label: {
+                    name("qrcode.viewfinder", Theme.accent, shell.pairingBusy ? "Pairing…" : "Pair with this link", words: Theme.accent)
                 }
                 .disabled(shell.pairingBusy)
             }
@@ -126,10 +128,10 @@ struct SettingsView: View {
                         topicCopied = false
                     }
                 } label: {
-                    Label(topicCopied ? "Copied" : "Copy the topic", systemImage: topicCopied ? "checkmark" : "doc.on.doc")
+                    name(topicCopied ? "checkmark" : "doc.on.doc", topicCopied ? Theme.lime : Theme.accent, topicCopied ? "Copied" : "Copy the topic", words: Theme.accent)
                 }
                 Button { openURL(Self.ntfyApp) } label: {
-                    Label("ntfy on the App Store", systemImage: "arrow.up.right.square")
+                    name("arrow.up.right.square", Theme.accent, "ntfy on the App Store", words: Theme.accent)
                 }
             } else {
                 Text(shell.paired ? "Off in MailPilot: Glasses, Notifications, Make a topic." : "Pair with MailPilot first.")
@@ -157,11 +159,15 @@ struct SettingsView: View {
                 Text(shell.glassesInfo).font(.footnote).foregroundStyle(Theme.muted)
             }
             if shell.glassesRegistered {
-                Button(role: .destructive) { shell.unregisterGlasses() } label: { Label("Unregister", systemImage: "xmark.circle") }
+                Button { shell.unregisterGlasses() } label: {
+                    name("xmark.circle", Theme.red, "Unregister", words: Theme.red)
+                }
             } else {
-                Button { shell.registerGlasses() } label: { Label("Register with the Meta AI app", systemImage: "arrow.up.forward.app") }
+                Button { shell.registerGlasses() } label: {
+                    name("arrow.up.forward.app", Theme.accent, "Register with the Meta AI app", words: Theme.accent)
+                }
             }
-            Toggle(isOn: $settings.useLens) { Label("Cards on the lens", systemImage: "rectangle.on.rectangle") }
+            Toggle(isOn: $settings.useLens) { name("rectangle.on.rectangle", Theme.violet, "Cards on the lens") }
             if !shell.glassesStatus.isEmpty {
                 Text(shell.glassesStatus).font(.footnote).foregroundStyle(Theme.muted)
             }
@@ -182,25 +188,27 @@ struct SettingsView: View {
                 Text("English").tag("en")
                 Text("Nederlands").tag("nl")
             } label: {
-                Label("Language", systemImage: "globe")
+                name("globe", Theme.cyan, "Language")
             }
             VStack(alignment: .leading, spacing: 6) {
-                Label("Speaking speed", systemImage: "speedometer")
+                name("speedometer", Theme.cyan, "Speaking speed")
                 Slider(value: $settings.speechRate, in: 0.7...1.5, step: 0.05)
             }
-            Toggle(isOn: $settings.readCards) { Label("Read a new card out loud", systemImage: "speaker.wave.2") }
+            Toggle(isOn: $settings.readCards) { name("speaker.wave.2.fill", Theme.cyan, "Read a new card out loud") }
             Picker(selection: $settings.listenSeconds) {
                 Text("5 s").tag(5)
                 Text("8 s").tag(8)
                 Text("15 s").tag(15)
                 Text("30 s").tag(30)
             } label: {
-                Label("Listens for an answer", systemImage: "mic")
+                name("mic.fill", Theme.cyan, "Listens for an answer")
             }
-            Toggle(isOn: $settings.bargeIn) { Label("Answer over it", systemImage: "waveform") }
+            Toggle(isOn: $settings.bargeIn) { name("waveform", Theme.cyan, "Answer over it") }
             if let host = shell.speechHost {
-                row("waveform.badge.mic", Theme.cyan, "Speech server") { Text(host).foregroundStyle(Theme.muted).lineLimit(1) }
-                Button { shell.testSpeech() } label: { Label("Test the speech server", systemImage: "checkmark.circle") }
+                row("server.rack", Theme.cyan, "Speech server") { Text(host).foregroundStyle(Theme.muted).lineLimit(1) }
+                Button { shell.testSpeech() } label: {
+                    name("checkmark.circle", Theme.accent, "Test the speech server", words: Theme.accent)
+                }
                 if !shell.speechCheck.isEmpty {
                     Text(shell.speechCheck).font(.footnote).foregroundStyle(Theme.muted)
                 }
@@ -224,9 +232,11 @@ struct SettingsView: View {
             NavigationLink {
                 LogView()
             } label: {
-                Label("Log", systemImage: "text.alignleft")
+                name("text.alignleft", Theme.muted, "Log")
             }
-            ShareLink(item: Log.shared.file) { Label("Share the log", systemImage: "square.and.arrow.up") }
+            ShareLink(item: Log.shared.file) {
+                name("square.and.arrow.up", Theme.accent, "Share the log", words: Theme.accent)
+            }
             row("info.circle", Theme.muted, "Version") { Text(shell.version).foregroundStyle(Theme.muted) }
         } header: {
             Text("Diagnostics")
@@ -236,14 +246,23 @@ struct SettingsView: View {
         .listRowBackground(Theme.panel)
     }
 
-    /// A fact as a row: an icon in its colour, its name, and what it is on the right.
-    private func row<Value: View>(_ icon: String, _ color: Color, _ name: String, @ViewBuilder value: () -> Value) -> some View {
+    // MARK: Rows
+
+    /// What a row is: a small icon in its colour, then its name. Every row starts the same way, whatever it does.
+    private func name(_ icon: String, _ color: Color, _ text: String, words: Color = Theme.text) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(color)
                 .frame(width: 22)
-            Text(name)
+            Text(text).foregroundStyle(words)
+        }
+    }
+
+    /// A fact as a row: what it is, and what it says on the right.
+    private func row<Value: View>(_ icon: String, _ color: Color, _ text: String, @ViewBuilder value: () -> Value) -> some View {
+        HStack(spacing: 12) {
+            name(icon, color, text)
             Spacer(minLength: 8)
             value()
         }

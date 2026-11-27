@@ -36,6 +36,13 @@ enum DemoData {
         case "legacy":
             store.take(Attention(version: "l", atDesk: false, inMeeting: false, waiting: 0,
                                  counts: AttentionCounts(running: 1, review: 2, failed: 0), cards: [permission, question]))
+        case "recent":
+            // Only what works and what ended: so the folded-away part is on the first screen.
+            let all = board
+            store.take(RunBoard(version: "recent", acts: all.acts,
+                                runs: all.runs.filter { $0.lane == "working" || $0.lane == "done" || $0.lane == "stopped" },
+                                repos: [all.repos[1]], waiting: []))
+            store.take(choices)
         case "duty":
             shell.duty = .on
             shell.glasses = .worn

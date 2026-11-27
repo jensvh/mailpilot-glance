@@ -30,16 +30,29 @@ struct Orb: View {
         .frame(width: size, height: size)
         .overlay {
             if let ring {
-                RoundedRectangle(cornerRadius: size * 0.3 + 3, style: .continuous)
-                    .trim(from: 0, to: live ? 0.7 : 1)
-                    .stroke(ring, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .padding(-3.5)
-                    .rotationEffect(.degrees(live && turning ? 360 : 0))
-                    .animation(live ? .linear(duration: 2.4).repeatForever(autoreverses: false) : .default, value: turning)
+                let shape = RoundedRectangle(cornerRadius: size * 0.3 + 3, style: .continuous)
+                if live {
+                    // While it works a piece of the ring travels round it; the rest of the ring is faint.
+                    shape.stroke(ring.opacity(0.25), lineWidth: 2)
+                        .padding(-3.5)
+                    shape.stroke(ring, style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [around * 0.28, around * 0.72], dashPhase: turning ? -around : 0))
+                        .padding(-3.5)
+                        .animation(.linear(duration: 2.2).repeatForever(autoreverses: false), value: turning)
+                } else {
+                    shape.stroke(ring, lineWidth: 2)
+                        .padding(-3.5)
+                }
             }
         }
         .onAppear { turning = true }
         .accessibilityHidden(true)
+    }
+
+    /// About how long the ring is: a square's four sides, less what its round corners cut off.
+    private var around: CGFloat {
+        let side = size + 7
+        let corner = size * 0.3 + 3
+        return 4 * side - (8 - 2 * .pi) * corner
     }
 
     private var initials: String {

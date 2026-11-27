@@ -67,6 +67,10 @@ struct BoardView: View {
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: store.toast)
+        // What came of an ask is felt too: done, or not.
+        .sensoryFeedback(trigger: store.toast) { _, toast in
+            toast.map { $0.ok ? SensoryFeedback.success : SensoryFeedback.warning }
+        }
         .sheet(item: $route) { route in
             sheet(route)
                 .environmentObject(shell)
@@ -103,7 +107,10 @@ struct BoardView: View {
 
                 if store.board != nil {
                     chips
-                    lanes
+                    // Drawn again every half minute, so "6m" doesn't stand still while nothing else changes.
+                    TimelineView(.periodic(from: Date(), by: 30)) { _ in
+                        VStack(alignment: .leading, spacing: 8) { lanes }
+                    }
                 } else if !store.waiting.isEmpty {
                     LaneHeader(look: .you, count: store.waiting.count)
                     ForEach(store.waiting) { card in
@@ -423,20 +430,29 @@ struct DutyBar: View {
                     .foregroundStyle(Theme.text)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
-                    Button { shell.sendHeard() } label: { Label("Send", systemImage: "arrow.up") }
-                        .buttonStyle(.borderedProminent)
-                    Button { shell.againHeard() } label: { Label("Again", systemImage: "mic") }
-                        .buttonStyle(.bordered)
-                    Button { shell.cancelHeard() } label: { Text("Cancel") }
-                        .buttonStyle(.bordered)
+                    choice("Send", "arrow.up", filled: true) { shell.sendHeard() }
+                    choice("Again", "mic.fill", filled: false) { shell.againHeard() }
+                    choice("Cancel", nil, filled: false) { shell.cancelHeard() }
                 }
-                .font(.system(size: 13, weight: .medium))
-                .tint(Theme.lime)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).fill(Theme.lime.opacity(0.07)))
         .overlay(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).stroke(Theme.lime.opacity(0.22), lineWidth: 1))
+    }
+
+    private func choice(_ title: String, _ icon: String?, filled: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                if let icon { Image(systemName: icon).font(.system(size: 12, weight: .bold)) }
+                Text(title).font(.system(size: 14, weight: .semibold))
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .foregroundStyle(filled ? Theme.bg : Theme.lime)
+            .background(Capsule().fill(filled ? Theme.lime : Theme.lime.opacity(0.16)))
+        }
+        .buttonStyle(.plain)
     }
 }

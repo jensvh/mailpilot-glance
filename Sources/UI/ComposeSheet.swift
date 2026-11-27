@@ -117,6 +117,12 @@ struct ComposeSheet: View {
         .onAppear {
             if project == nil { project = projects.first?.id }
         }
+        .task {
+            // Straight to the words: the keyboard (and its microphone) comes up by itself on an empty sheet.
+            guard words.isEmpty, allowed else { return }
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            typing = true
+        }
         .onChange(of: store.answers) { _, answers in
             if let asked, answers[asked]?.ok == true { dismiss() }
         }
