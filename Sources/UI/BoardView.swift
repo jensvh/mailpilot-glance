@@ -357,7 +357,7 @@ struct BoardView: View {
         case .run(let id):
             if let run = store.run(id) {
                 RunSheet(opened: run) { self.route = .compose(run.id) }
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
             } else {
                 gone("This run is no longer on the board.")
             }
@@ -374,7 +374,7 @@ struct BoardView: View {
         case .release(let id):
             if let repo = store.repos.first(where: { $0.id == id }) {
                 ReleaseSheet(opened: repo, preset: plan)
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
             } else {
                 gone("Released: nothing waits in dev here.")
             }

@@ -95,6 +95,8 @@ targets:
       - Sources/Demo
       - Sources/Support
       - Sources/Link/Protocol.swift
+      # The protocol names the envelope (a key's length); it needs CryptoKit only.
+      - Sources/Link/Envelope.swift
       - Sources/Assets.xcassets
     scheme: {}
     info:
