@@ -10,8 +10,8 @@ import Foundation
 
 enum LensWire {
     static let version = 1
-    /// What this app says it can in its hello: the agents' cards, and no walk.
-    static let can = ["attention"]
+    /// What this app says it can in its hello: the agents' cards and the board of runs, and no walk.
+    static let can = ["attention", "board"]
 }
 
 // MARK: - MailPilot -> phone
@@ -105,12 +105,153 @@ struct LensConfig: Decodable, Equatable {
     var notifyTopic: String?
 }
 
+// MARK: - The board of runs
+
+/// Every run worth a look, as MailPilot decided it: which lane it sits in, what it is at, its git facts and what can
+/// be done to it now. Sent whole while this app is on the screen; the app draws it and holds no rules of its own.
+struct RunBoard: Decodable, Equatable {
+    var version: String
+    /// What can be asked of the board itself: "new" when runs may be started from the phone.
+    var acts: [String]
+    /// In the order to show them: by lane, most pressing first.
+    var runs: [BoardRun]
+    /// Repos whose dev holds merged work that isn't on main yet: one release brings it all.
+    var repos: [BoardRepo]
+    /// Everything that waits on you, also what MailPilot would keep at the desk: the board is something you open.
+    var waiting: [AttentionCard]
+}
+
+struct BoardRun: Decodable, Equatable, Identifiable {
+    var id: String
+    /// Sent back with an action: one on a run that changed since it was drawn is refused.
+    var version: String
+    var title: String
+    /// "bug", "feature", "chore" or "job".
+    var kind: String
+    var project: String?
+    var hue: Int
+    var emoji: String?
+    /// "owner/name"; none for a job.
+    var repo: String?
+    /// "you", "working", "review", "dev", "done" or "stopped". Kept as a string, so a new one still draws.
+    var lane: String
+    /// One word for what it is at ("coding", "pr", "conflicts", …): an icon and a colour here.
+    var stage: String
+    var branch: String?
+    var base: String?
+    var commits: Int?
+    var files: Int?
+    var plus: Int?
+    var minus: Int?
+    /// Its pull request's number.
+    var pr: Int?
+    var tests: Bool?
+    var model: String
+    var effort: String
+    var rounds: Int
+    /// When it came to where it is now, in seconds since 1970.
+    var since: Double?
+    var note: String?
+    /// An action asked from a phone is under way: "merging".
+    var busy: String?
+    /// What can be done to it now: "prompt", "publish", "merge", "resolve", "stop", "retry".
+    var can: [String]
+    /// What it would allow, but is switched off in MailPilot.
+    var off: [String]?
+}
+
+struct BoardRepo: Decodable, Equatable, Identifiable {
+    var repo: String
+    var project: String?
+    var hue: Int
+    var emoji: String?
+    var from: String
+    var to: String
+    var count: Int
+    /// A release can be asked from here; false when that is switched off in MailPilot.
+    var can: Bool
+    var busy: String?
+
+    var id: String { repo + ">" + to }
+}
+
+/// What a prompt can choose from: the projects with a repo, the models that can run, the thinking levels.
+struct BoardChoices: Decodable, Equatable {
+    var version: String
+    var projects: [BoardProject]
+    var models: [BoardModel]
+    var efforts: [String]
+}
+
+struct BoardProject: Decodable, Equatable, Identifiable {
+    var id: String
+    var name: String
+    var emoji: String?
+    var hue: Int
+    var repos: [BoardProjectRepo]
+}
+
+struct BoardProjectRepo: Decodable, Equatable {
+    var repo: String
+    var base: String?
+}
+
+struct BoardModel: Decodable, Equatable, Identifiable {
+    var key: String
+    var label: String
+    /// 1 lightest … 4 strongest.
+    var tier: Int
+    var hue: Int
+    /// It takes a thinking level.
+    var thinking: Bool
+    /// The connection it runs on; none for the Claude account's own.
+    var source: String?
+
+    var id: String { key }
+}
+
+/// What came of something asked of a run: "Merged into dev", or why it was refused.
+struct RunDone: Decodable, Equatable {
+    /// The id this app gave its ask.
+    var id: String
+    var ok: Bool
+    var text: String
+    var run: String?
+    /// What a release would bring, in answer to "plan".
+    var plan: ReleasePlan?
+}
+
+/// What a release of a repo would bring to main right now: the facts to confirm before it is asked for.
+struct ReleasePlan: Decodable, Equatable {
+    var repo: String
+    var from: String
+    var to: String
+    /// How many commits dev holds that main doesn't.
+    var ahead: Int
+    var subject: String
+    var changes: [PlanChange]
+    /// Changes beyond the ones listed.
+    var more: Int
+    /// Sent back with the release: it is refused when dev moved since.
+    var version: String
+}
+
+struct PlanChange: Decodable, Equatable {
+    var title: String
+    var n: Int?
+    /// "feature", "fix", "dependencies" or "other".
+    var kind: String
+}
+
 enum LensDown: Equatable {
     case attention(Attention)
     case done(AttentionDone)
     case pong(Int)
     case paired(LensPaired)
     case config(LensConfig)
+    case board(RunBoard)
+    case choices(BoardChoices)
+    case runDone(RunDone)
 
     private struct Head: Decodable {
         var t: String
@@ -119,6 +260,8 @@ enum LensDown: Equatable {
 
     private struct AttentionBody: Decodable { var attention: Attention }
     private struct PongBody: Decodable { var n: Int }
+    private struct BoardBody: Decodable { var board: RunBoard }
+    private struct ChoicesBody: Decodable { var choices: BoardChoices }
 
     /// MailPilot writes times as ISO 8601, with or without fractions of a second.
     static let decoder: JSONDecoder = {
@@ -153,6 +296,9 @@ enum LensDown: Equatable {
         case "pong": return (try? decoder.decode(PongBody.self, from: data)).map { .pong($0.n) }
         case "paired": return (try? decoder.decode(LensPaired.self, from: data)).map { .paired($0) }
         case "config": return (try? decoder.decode(LensConfig.self, from: data)).map { .config($0) }
+        case "board": return (try? decoder.decode(BoardBody.self, from: data)).map { .board($0.board) }
+        case "choices": return (try? decoder.decode(ChoicesBody.self, from: data)).map { .choices($0.choices) }
+        case "run-done": return (try? decoder.decode(RunDone.self, from: data)).map { .runDone($0) }
         default: return nil
         }
     }
@@ -173,8 +319,14 @@ enum LensUp {
     /// The card was on the lens.
     case seen(id: String)
     /// Whether this phone shows what waits right now (on duty, or the app in front): while it does, MailPilot sends no
-    /// notification. It counts only while the phone is heard from.
-    case watching(Bool)
+    /// notification. It counts only while the phone is heard from. `board` says the app is on the screen, so the board
+    /// of runs is drawn: only then does MailPilot send it, and `boardV` and `choicesV` say which ones the app holds,
+    /// so what it has isn't sent again.
+    case watching(Bool, board: Bool? = nil, boardV: String? = nil, choicesV: String? = nil)
+    /// Something asked of a run, a repo or the board: `action` is "new", "prompt", "publish", "merge", "resolve",
+    /// "retry", "stop", "plan" or "release". `id` is this app's own; the answer comes back under it.
+    case runAct(id: String, action: String, run: String? = nil, repo: String? = nil, version: String? = nil,
+                words: String? = nil, model: String? = nil, effort: String? = nil, project: String? = nil, kind: String? = nil)
 
     var kind: String {
         switch self {
@@ -185,6 +337,7 @@ enum LensUp {
         case .later: return "attention-later"
         case .seen: return "attention-seen"
         case .watching: return "watch"
+        case .runAct: return "run-act"
         }
     }
 
@@ -210,8 +363,22 @@ enum LensUp {
             out["version"] = version
         case .later(let id), .seen(let id):
             out["id"] = id
-        case .watching(let on):
+        case .watching(let on, let board, let boardV, let choicesV):
             out["on"] = on
+            if let board { out["board"] = board }
+            if let boardV { out["boardV"] = boardV }
+            if let choicesV { out["choicesV"] = choicesV }
+        case .runAct(let id, let action, let run, let repo, let version, let words, let model, let effort, let project, let kind):
+            out["id"] = id
+            out["action"] = action
+            if let run { out["run"] = run }
+            if let repo { out["repo"] = repo }
+            if let version { out["version"] = version }
+            if let words { out["words"] = words }
+            if let model { out["model"] = model }
+            if let effort { out["effort"] = effort }
+            if let project { out["project"] = project }
+            if let kind { out["kind"] = kind }
         }
         return out
     }

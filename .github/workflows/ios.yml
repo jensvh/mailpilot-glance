@@ -37,6 +37,9 @@ jobs:
         run: |
           swiftc -swift-version 5 -O Sources/Link/Envelope.swift Sources/Link/Protocol.swift Sources/Attention/Answer.swift tools/answer/main.swift -o answer-check
           ./answer-check
+      # No picture is kept in the repository: the icon is drawn here.
+      - name: Draw the app icon
+        run: swift tools/icon/main.swift Sources/Assets.xcassets/AppIcon.appiconset/icon.png
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate the Xcode project
@@ -84,4 +87,65 @@ jobs:
         with:
           name: MailPilotGlance
           path: MailPilotGlance.ipa
+          if-no-files-found: error
+
+  # The app's screens as pictures. The demo target is the same screens on made-up data, without the
+  # glasses' toolkit: it runs in the simulator, opened on one screen at a time. This is how the look
+  # is checked without a Mac or a phone; the pictures are the "screens" artifact.
+  screens:
+    name: Screens
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode (pinned, so a runner update cannot change the build)
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app && xcodebuild -version
+      - name: Draw the app icon
+        run: swift tools/icon/main.swift Sources/Assets.xcassets/AppIcon.appiconset/icon.png
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate the Xcode project
+        run: xcodegen generate
+      - name: Build the demo for the simulator
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project MailPilotGlance.xcodeproj -scheme GlanceDemo \
+            -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tee build.log | grep -E 'error:|BUILD' || true
+          grep -q 'BUILD SUCCEEDED' build.log
+      - name: Keep the build errors
+        if: failure()
+        run: grep -E 'error:' build.log | sort -u | head -200 > errors.txt || true
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: screen-errors
+          path: errors.txt
+      - name: Take the pictures
+        run: |
+          set -e
+          APP=build/Build/Products/Debug-iphonesimulator/GlanceDemo.app
+          xcrun simctl list devices available | grep -E 'iPhone' | head -8
+          UDID=$(xcrun simctl list devices available | grep -E '^ +iPhone' | head -1 | grep -oE '[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}')
+          echo "device: $UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl ui "$UDID" appearance dark
+          xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p screens
+          for s in board recent run card release compose followup duty pair empty settings legacy; do
+            xcrun simctl launch --terminate-running-process "$UDID" io.github.jensvh.mailpilot.glance.demo -demo "$s"
+            sleep 6
+            xcrun simctl io "$UDID" screenshot "screens/$s.png"
+          done
+          cp Sources/Assets.xcassets/AppIcon.appiconset/icon.png screens/icon.png
+          ls -l screens
+      - uses: actions/upload-artifact@v7
+        with:
+          name: screens
+          path: screens
           if-no-files-found: error

@@ -1,8 +1,11 @@
 # MailPilot Glance
 
-The iPhone side of MailPilot for Meta Ray-Ban Display glasses, for one thing: when a coding agent waits on you and you're away from your desk, its question is on the lens, and you answer it with a pinch or a word.
+The iPhone side of MailPilot's coding agents, for two things:
 
-MailPilot (a separate, private app on a PC) decides everything: what waits, how it is worded, who is told (the desk while you're at it, the glasses when you're away), and what each answer does. This app is the thin part in your pocket. It shows MailPilot's cards on the lens, reads them out, listens for your answer and sends it back. It holds no logic about agents and stores nothing.
+- **On the phone, the board.** Every run in one list: what waits on you, what the agent works on, what is finished and waits in a pull request, what sits in dev. Answer a question, send a prompt, merge a pull request or release, from where you are.
+- **On Meta Ray-Ban Display glasses, the question.** When an agent waits on you and you're away from your desk, its question is on the lens, and you answer it with a pinch or a word.
+
+MailPilot (a separate, private app on a PC) decides everything: what waits, how it is worded, where a run stands, what can be done to it, who is told, and what each answer does. This app is the thin part in your pocket. It draws what MailPilot sends, reads the cards out, listens for your answer and sends it back. It holds no rules about agents and stores nothing.
 
 ```
 Glasses ──Bluetooth── iPhone (this app) ──wss──► your speech-to-text server
@@ -13,7 +16,28 @@ Glasses ──Bluetooth── iPhone (this app) ──wss──► your speech-t
 
 It replaces MailPilot Lens (the walk through mail, tasks and runs), which is no longer worked on.
 
-> **Status: not yet tried on a phone or on the glasses.** It compiles, and the build proves that this app and MailPilot seal and read each other's messages the same way. Its link, voice and glasses code comes from MailPilot Lens, where it was tried on the device. What has to be found out on the device is in [docs/device-check.md](docs/device-check.md).
+> **Status: not yet tried on a phone or on the glasses.** It compiles, the build proves that this app and MailPilot seal and read each other's messages the same way, and it takes pictures of every screen on made-up data. Its link, voice and glasses code comes from MailPilot Lens, where it was tried on the device. What has to be found out on the device is in [docs/device-check.md](docs/device-check.md).
+
+## The board
+
+One list, grouped by what a run needs. A colour means a lane; a project keeps its own colour on its square.
+
+| Lane | What is in it | On the row |
+|---|---|---|
+| **Needs you** (amber) | a permission question, the agent's questions, an outline, a run on hold | the question; yes or no right on the row for a permission |
+| **Working** (cyan) | queued, preparing, coding, testing, opening the pull request | where it is, the model, how long |
+| **Review** (violet) | a finished branch, an open or draft pull request, conflicts, a job's result | its number, lines added and removed, tests, the merge |
+| **In dev** (green) | one row per repo with merged work that isn't on main yet | `dev → main`, how many changes, the release |
+| **Recent** (grey) | what went live, failed or was stopped in the last week | folded away until you open it |
+
+- The four counts at the top also filter: a tap shows only that lane.
+- **A tap on a run** opens it: what waits on you first, then its way from code to main, its commits, lines and tests, its branch and pull request, the model and thinking level, and what can be done now.
+- **The plus** sends a prompt: a new run in a project (bug, feature or chore), or another round for a run. The model and the thinking level are on Auto until you pick one; MailPilot then chooses as it does at the desk.
+- **A merge is a slide**, not a tap. A release first shows what dev holds right now, then asks for the slide, and releases exactly that: when dev moved since, MailPilot and GitHub both refuse.
+
+What the phone may do is switched on in MailPilot (Glasses page, *From the phone*): prompts, merge into dev, release to main, each on its own and all off until you turn them on. What is off shows with a lock. Answering what waits and stopping a run need no switch.
+
+The board is sent only while Glance is on the screen.
 
 ## What a card is
 
@@ -29,7 +53,7 @@ One thing an agent can't go on without:
 
 Everywhere: "later" (off the glasses until it changes), "why" (read it again), "next" (the next card).
 
-- A yes is only ever one of the card's own words (MailPilot sends them with the card), never a guess. "Always allow", a command Claude Code's safety check flagged, and anything that can't be undone are never offered here: only the desk can do them.
+- A yes is only ever one of the card's own words (MailPilot sends them with the card), never a guess. "Always allow" and a command Claude Code's safety check flagged are never offered here: only the desk can do them. On the glasses nothing is merged or released; that is on the phone's board, behind its switches and a slide.
 - Your own words are read back ("Heard: … Send it?") and only go after "send" or a pinch on **Send**.
 - A card that changed while you answered (it went on hold, it was answered at the desk) refuses the answer and says so.
 
@@ -63,14 +87,14 @@ Pairing gives the phone its own key, its address on the relay and the speech ser
 
 ## On duty
 
-Tap **Go on duty** with the app open (iOS only lets an app open the microphone while it is in front), then lock the phone and put it away. From then on:
+Tap the glasses at the top of the board with the app open (iOS only lets an app open the microphone while it is in front), then lock the phone and put it away. From then on:
 
 - When an agent starts waiting on you and you're away from the desk, you hear a short sound, the card is read out and is on the lens, and the microphone listens for a few seconds.
 - At the desk you hear nothing: MailPilot shows it there. A permission question you leave at the desk for 90 seconds comes to the glasses as well, before it puts its run on hold.
 - In an Outlook meeting only permission questions come through.
 - Answered or put off, the lens goes dark.
 
-Tap **On duty** again to stop.
+Tap **On duty** again to stop. On duty with the screen off, MailPilot sends only what waits, not the board.
 
 ## Off duty: notifications
 
@@ -93,8 +117,19 @@ Glance tells MailPilot whether it watches (on duty, or on the screen) after ever
 | `Sources/Voice` | The microphone through the glasses, the speech server, the iPhone's voices. From MailPilot Lens. |
 | `Sources/Glasses` | The toolkit's session and display (from MailPilot Lens), and the card on the lens. |
 | `Sources/Attention` | The cards as MailPilot sent them, and the fixed rules from a sentence to an answer. |
+| `Sources/Board` | The board as MailPilot sent it, and what this phone asked of the runs and still waits on. |
+| `Sources/UI` | Every screen. They only know plain values and closures (`Shell`) and the board: not the link, the glasses or the microphone. |
+| `Sources/App` | The app's entry, and `Live`, the one place that joins the screens to the real things. |
+| `Sources/Demo` | The same screens on made-up data, as an app of its own without the glasses' toolkit. |
 | `Sources/OnDuty.swift` | What happens when a card comes, and what an answer does. |
 | `tools/interop` | Messages sealed by MailPilot's own code; the build opens and reads them all. |
 | `tools/answer` | The answer rules, checked by the build. |
+| `tools/icon` | Draws the app's icon in the build; no picture is kept here. |
 
-The messages are MailPilot's link, version 1, with `can: ["attention"]` in the hello, `watch` after it, and no walk. MailPilot's `docs/AGENT-UNBLOCKER.md` describes them under "On the link".
+There is no Mac in this project, so the build is also the eyes: its **Screens** job runs the demo app in the simulator, opens it on one screen at a time and keeps the pictures (the `screens` artifact):
+
+```powershell
+gh run download --repo jensvh/mailpilot-glance --name screens --dir screens
+```
+
+The messages are MailPilot's link, version 1, with `can: ["attention", "board"]` in the hello, `watch` after it, and no walk. MailPilot's `docs/AGENT-UNBLOCKER.md` describes them under "On the link".

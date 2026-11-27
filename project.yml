@@ -16,14 +16,20 @@ settings:
     # Swift 5 language mode: written without a local compiler, so Swift 6's
     # strict concurrency checks would only add build round trips.
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.2.0"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "0.3.0"
+    CURRENT_PROJECT_VERSION: "3"
+    # The icon is drawn by the build (tools/icon), the accent colour is the app's violet.
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 targets:
   MailPilotGlance:
     type: application
     platform: iOS
     sources:
-      - Sources
+      # Everything but the demo: its made-up data and its own app entry.
+      - path: Sources
+        excludes:
+          - "Demo/**"
     dependencies:
       - package: MWDAT
         product: MWDATCore
@@ -75,4 +81,34 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
         # The app is signed later, on Windows, with your Apple ID.
+        CODE_SIGNING_ALLOWED: NO
+  # The same screens on made-up data, without the glasses' toolkit: the build opens it in the
+  # simulator on one screen at a time and takes a picture (the "screens" job). It is how the
+  # app's look is checked without a Mac or a phone, and it only compiles while the screens need
+  # nothing but plain values.
+  GlanceDemo:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/UI
+      - Sources/Board
+      - Sources/Demo
+      - Sources/Support
+      - Sources/Link/Protocol.swift
+      - Sources/Assets.xcassets
+    scheme: {}
+    info:
+      path: Demo-Info.plist
+      properties:
+        CFBundleDisplayName: Glance Demo
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.jensvh.mailpilot.glance.demo
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
         CODE_SIGNING_ALLOWED: NO

@@ -52,6 +52,8 @@ final class OnDuty: ObservableObject {
     let ears: Ears
     let glasses = Glasses()
     let cards = Cards()
+    /// The board of runs the phone's own screen draws, and what it asked of them.
+    let board = BoardStore()
 
     /// What the lens shows now, so the same view isn't sent twice.
     private var shown: String?
@@ -71,6 +73,21 @@ final class OnDuty: ObservableObject {
         link.watching = { [weak self] in self?.watching ?? false }
         link.onAttention = { [weak self] attention in self?.attentionChanged(attention) }
         link.onDone = { [weak self] done in self?.answered(done) }
+        // The board is drawn while the app is on the screen: MailPilot is told so, and which one the app holds.
+        link.boardState = { [weak self] in
+            guard let self else { return (false, nil, nil) }
+            return (self.inFront, self.board.board?.version, self.board.choices?.version)
+        }
+        link.onBoard = { [weak self] next in
+            self?.board.take(next)
+            Log.say("board: \(next.runs.count) runs, \(next.waiting.count) waiting, \(next.repos.count) to release")
+        }
+        link.onChoices = { [weak self] next in self?.board.take(next) }
+        link.onRunDone = { [weak self] done in
+            Log.say("asked: \(done.ok ? "done" : "refused")\(done.text.isEmpty ? "" : ", \(done.text)")")
+            self?.board.take(done)
+        }
+        board.send = { [weak self] message in self?.link.send(message) ?? false }
         ears.speechServer = { [weak self] in self?.link.speech }
         ears.onHeard = { [weak self] words in self?.heard(words) }
         glasses.onSessionEnded = { [weak self] in self?.sessionEnded() }
@@ -94,7 +111,8 @@ final class OnDuty: ObservableObject {
                 guard let self else { return }
                 Log.say(self.isOn ? "app in the background (on duty goes on)" : "app in the background (off duty: MailPilot notifies)")
                 self.inFront = false
-                if !self.isOn { self.tellNotWatching() }
+                // On duty the phone goes on watching, but its screen is off: MailPilot stops sending the board.
+                if self.isOn { self.link.sendWatching() } else { self.tellNotWatching() }
             }
         })
         observers.append(center.addObserver(forName: UIApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
@@ -224,6 +242,8 @@ final class OnDuty: ObservableObject {
 
     private func attentionChanged(_ attention: Attention) {
         let fresh = cards.take(attention)
+        // An older MailPilot sends no board: the screen then draws these cards.
+        board.take(attention)
         Log.say("cards: \(attention.cards.count) to show, \(attention.waiting) waiting elsewhere\(attention.atDesk ? ", at the desk" : "")\(attention.inMeeting ? ", in a meeting" : "")")
         guard isOn else {
             // Off duty with the app on the screen: a tap of the phone, since MailPilot sends no notification then.
@@ -255,6 +275,7 @@ final class OnDuty: ObservableObject {
     private func answered(_ done: AttentionDone) {
         Log.say("answer: \(done.ok ? "done" : "refused"), \(done.text)")
         cards.done(done.text, ok: done.ok)
+        board.say(done.text, ok: done.ok)
         if isOn {
             ears.say(done.text, earcon: done.ok ? "done" : "error", thenListen: false)
             render()
@@ -346,9 +367,37 @@ final class OnDuty: ObservableObject {
         render()
     }
 
+    // MARK: Answers from the phone's own screen
+
+    /// A tap on one of a card's options on the board: any card that waits, not only the one on the lens.
+    func answer(_ card: AttentionCard, option: String) {
+        // Never a yes from here to what only the desk may allow; MailPilot refuses it too.
+        if card.deskOnly, option == "allow" { return }
+        if !link.send(.act(id: card.id, option: option, words: nil, version: card.version)) { offline() }
+    }
+
+    /// Your own typed words for a card that takes them.
+    func answer(_ card: AttentionCard, words: String) {
+        guard card.takesWords else { return }
+        if !link.send(.act(id: card.id, option: nil, words: words, version: card.version)) { offline() }
+    }
+
+    func later(_ card: AttentionCard) {
+        if !link.send(.later(id: card.id)) { offline() }
+    }
+
+    /// Forgets the pairing, and with it everything MailPilot sent.
+    func unpair() {
+        if stage != .off { stop() }
+        link.unpair()
+        cards.clear()
+        board.clear()
+    }
+
     private func offline() {
         Log.say("answer not sent: not connected")
         cards.done("Not connected to MailPilot", ok: false)
+        board.say("Not connected to MailPilot", ok: false)
         if isOn { ears.say("Not connected to MailPilot. Answer at the desk.", earcon: "error") }
         render()
     }

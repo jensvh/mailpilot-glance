@@ -61,7 +61,14 @@ final class Link: ObservableObject {
 
     var onAttention: ((Attention) -> Void)?
     var onDone: ((AttentionDone) -> Void)?
+    /// The board of runs, what a prompt can choose from, and what came of something asked of a run.
+    var onBoard: ((RunBoard) -> Void)?
+    var onChoices: ((BoardChoices) -> Void)?
+    var onRunDone: ((RunDone) -> Void)?
     var onStatusChanged: (() -> Void)?
+    /// Whether the board is on the screen now, and which board and choices the app holds: said with every "watch",
+    /// so MailPilot sends the board only while it is drawn and only when it differs.
+    var boardState: () -> (shown: Bool, board: String?, choices: String?) = { (false, nil, nil) }
     /// The language to tell MailPilot ("en", "nl"); nil leaves it to MailPilot.
     var language: () -> String? = { nil }
     /// Whether this phone shows what waits now (on duty, or the app in front). Told to MailPilot after every hello and
@@ -187,20 +194,27 @@ final class Link: ObservableObject {
     func sayHello() {
         guard let device else { return }
         send(.hello(device: device, app: Self.appVersion, language: language()))
-        send(.watching(watching()))
+        send(watch())
+    }
+
+    /// What this phone shows now: what waits (on duty, or the app in front), and the board when the app is on the
+    /// screen, with the versions it holds.
+    private func watch() -> LensUp {
+        let state = boardState()
+        return .watching(watching(), board: state.shown, boardV: state.shown ? state.board : nil, choicesV: state.shown ? state.choices : nil)
     }
 
     /// Tells MailPilot whether this phone shows what waits now.
     func sendWatching() {
         let on = watching()
-        if send(.watching(on)) { Log.say("link: watching \(on ? "on" : "off")") }
+        if send(watch()) { Log.say("link: watching \(on ? "on" : "off")\(boardState().shown ? ", board on screen" : "")") }
     }
 
     /// The same, waiting until the relay took it: for the moment before the app is suspended.
     func sendWatchingNow() async -> Bool {
         let on = watching()
         guard let device, let envelope, let relay, relay.connected,
-              let sealed = envelope.seal(.up, LensUp.watching(on).json(), at: outgoing.next()) else { return false }
+              let sealed = envelope.seal(.up, watch().json(), at: outgoing.next()) else { return false }
         let taken = await relay.sendAcked(group: LensGroups.up(device), data: sealed) == true
         Log.say("link: watching \(on ? "on" : "off")\(taken ? "" : " (not confirmed)")")
         return taken
@@ -244,6 +258,12 @@ final class Link: ObservableObject {
             onAttention?(next)
         case .done(let done):
             onDone?(done)
+        case .board(let next):
+            onBoard?(next)
+        case .choices(let next):
+            onChoices?(next)
+        case .runDone(let done):
+            onRunDone?(done)
         case .pong(let n):
             if let at = pingSentAt[n] { roundTripMs = Int(Date().timeIntervalSince(at) * 1000) }
             pingSentAt = [:]

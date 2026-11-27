@@ -54,3 +54,19 @@ Set them up first: MailPilot's Glasses page, Notifications, Make a topic; Glance
 - **Cut.** On duty, put the phone in flight mode for two minutes, let a run wait, then turn flight mode off. Expect a notification (MailPilot stops counting a phone it doesn't hear from for 70 seconds).
 - **Reminder.** Let a permission question wait 5 minutes unanswered with Glance closed: one more "Still waiting" when its run goes on hold, then nothing.
 - Found: closed ___ s, opens Glance ___, buzz ___, quiet on duty ___, after the cut ___, reminder once ___.
+
+## 8. The board
+
+Needs MailPilot with the board (its Glasses page shows *From the phone*) and Glance 0.3.0. First with every switch off, then with them on.
+
+- **Shows.** Open Glance. Expect your runs within a second or two, grouped: needs you, working, review, in dev; "Recent" folded. The counts at the top match, and a tap on one filters.
+- **Readable.** Is a row readable at arm's length? Do the name and the line under it fit on a small iPhone, or are they cut too soon?
+- **Locked.** With the switches off: the merge, the release and the plus show a lock, and say where to turn them on. Nothing is sent.
+- **A permission from the row.** Let a run ask permission. Tap the tick on its row. Expect "Allowed once" and the row moving to Working.
+- **A question.** Open a run that asks something: its answers as buttons, your own words in the field. Answer.
+- **A follow-up.** Open a finished run, Prompt, type or dictate, pick a model and a thinking level, Send. Expect it under Working, on what you picked.
+- **A new run.** The plus: project, bug/feature/chore, the words, Start. Expect it under Working and a task for it in MailPilot.
+- **Merge into dev.** Open a run with an open pull request and slide. Expect "Merged into dev" and one more change under In dev. Slide half-way and let go: nothing happens.
+- **Release.** Tap a repo under In dev. Expect the list of what dev holds, then the slide; after it, "Live on main" and the row gone. Push something to dev between the list and the slide: expect a refusal and "Look again".
+- **Locked phone.** On duty, lock the phone for ten minutes while a run goes through its stages, then open Glance: the board is current within a second or two (MailPilot sent none while the screen was off).
+- Found: shows in ___ s, readable ___, locked ___, tick on the row ___, question ___, follow-up ___, new run ___, merge ___, release ___, refused after a push ___, after a lock ___.

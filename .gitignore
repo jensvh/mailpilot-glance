@@ -19,3 +19,8 @@ build-out/
 *.p12
 
 .DS_Store
+
+# Made by the build: the demo's Info.plist, the drawn icon, the screenshots
+Demo-Info.plist
+Sources/Assets.xcassets/AppIcon.appiconset/icon.png
+screens/

@@ -1,18 +1,15 @@
 import SwiftUI
 import UIKit
 
-/// Pairing, the glasses' registration, how it reads and listens, and the log.
+/// Pairing, the notifications, the glasses' registration, how it reads and listens, and the log. Each row says what
+/// it is with an icon and a word; the longer words sit in a footnote only where they are needed.
 struct SettingsView: View {
-    @EnvironmentObject private var duty: OnDuty
+    @EnvironmentObject private var shell: Shell
     @EnvironmentObject private var settings: AppSettings
-    @EnvironmentObject private var link: Link
-    @EnvironmentObject private var glasses: Glasses
     @Environment(\.dismiss) private var dismiss
-
     @Environment(\.openURL) private var openURL
 
     @State private var pasted = ""
-    @State private var speechCheck = ""
     @State private var confirmUnpair = false
     @State private var topicCopied = false
 
@@ -24,16 +21,21 @@ struct SettingsView: View {
             Form {
                 pairing
                 notifications
-                glassesSection
-                voiceSection
+                glasses
+                voice
                 diagnostics
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.bg)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }.fontWeight(.semibold)
+                }
             }
         }
+        .tint(Theme.accent)
         .preferredColorScheme(.dark)
     }
 
@@ -41,38 +43,65 @@ struct SettingsView: View {
 
     private var pairing: some View {
         Section {
-            LabeledContent("Status", value: link.status.label)
-            if link.paired {
-                if let host = link.host, !host.isEmpty { LabeledContent("Paired with", value: host) }
-                if let id = link.deviceId { LabeledContent("This phone", value: String(id.prefix(8))) }
-                Button("Forget this pairing", role: .destructive) { confirmUnpair = true }
-                    .confirmationDialog("Forget the pairing with MailPilot?", isPresented: $confirmUnpair, titleVisibility: .visible) {
-                        Button("Forget", role: .destructive) {
-                            if duty.stage != .off { duty.stop() }
-                            link.unpair()
-                            duty.cards.clear()
-                        }
-                    } message: {
-                        Text("Remove this phone in MailPilot too (Glasses, Phones).")
+            row("link", linkColor, "MailPilot") {
+                HStack(spacing: 6) {
+                    Circle().fill(linkColor).frame(width: 8, height: 8)
+                    Text(linkWord).foregroundStyle(Theme.muted)
+                }
+            }
+            if shell.paired {
+                if let host = shell.host, !host.isEmpty {
+                    row("desktopcomputer", Theme.cyan, "Paired with") { Text(host).foregroundStyle(Theme.muted) }
+                }
+                if let id = shell.deviceShort {
+                    row("iphone", Theme.cyan, "This phone") {
+                        Text(id).font(.system(size: 14, design: .monospaced)).foregroundStyle(Theme.muted)
                     }
+                }
+                Button(role: .destructive) { confirmUnpair = true } label: {
+                    Label("Forget this pairing", systemImage: "trash")
+                }
+                .confirmationDialog("Forget the pairing with MailPilot?", isPresented: $confirmUnpair, titleVisibility: .visible) {
+                    Button("Forget", role: .destructive) { shell.unpair() }
+                } message: {
+                    Text("Remove this phone in MailPilot too (Glasses, Phones).")
+                }
             }
-            if let note = link.pairingNote {
-                Text(note).font(.footnote).foregroundStyle(.secondary)
+            if let note = shell.pairingNote {
+                Text(note).font(.footnote).foregroundStyle(Theme.amber)
             }
-            TextField("Or paste the pairing link", text: $pasted)
+            TextField("Paste a pairing link", text: $pasted)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
             if !pasted.isEmpty {
-                Button(link.pairingBusy ? "Pairing…" : "Pair with this link") {
-                    link.pair(pasted)
+                Button(shell.pairingBusy ? "Pairing…" : "Pair with this link") {
+                    shell.pair(pasted)
                     pasted = ""
                 }
-                .disabled(link.pairingBusy)
+                .disabled(shell.pairingBusy)
             }
-        } header: {
-            Text("MailPilot")
         } footer: {
-            Text("In MailPilot, open Glasses and choose Pair a phone. Scan the code with the iPhone camera: it opens this app. The code works once and for 10 minutes. Everything between this phone and MailPilot is encrypted with a key only the two of them have.")
+            Text("A code works once, for 10 minutes. Everything between this phone and MailPilot is encrypted.")
+        }
+        .listRowBackground(Theme.panel)
+    }
+
+    private var linkColor: Color {
+        switch shell.link {
+        case .online: return Theme.lime
+        case .connecting, .silent: return Theme.amber
+        case .offline: return Theme.red
+        case .unpaired: return Theme.faint
+        }
+    }
+
+    private var linkWord: String {
+        switch shell.link {
+        case .online: return shell.pingMs.map { "connected · \($0) ms" } ?? "connected"
+        case .connecting: return "connecting"
+        case .silent: return "no answer"
+        case .offline: return "offline"
+        case .unpaired: return "not paired"
         }
     }
 
@@ -80,115 +109,148 @@ struct SettingsView: View {
 
     private var notifications: some View {
         Section {
-            if let notify = link.notify {
-                LabeledContent("Topic", value: "••••••" + String(notify.topic.suffix(4)))
-                if let own = notify.ownServer {
-                    LabeledContent("Server", value: own)
+            if let topic = shell.notifyTopic {
+                row("bell.badge.fill", Theme.amber, "Topic") {
+                    Text("••••••" + String(topic.suffix(4)))
+                        .font(.system(size: 14, design: .monospaced))
+                        .foregroundStyle(Theme.muted)
+                }
+                if let server = shell.notifyServer {
+                    row("server.rack", Theme.amber, "Server") { Text(server).foregroundStyle(Theme.muted).lineLimit(1) }
                 }
                 Button {
-                    UIPasteboard.general.string = notify.topic
+                    UIPasteboard.general.string = topic
                     topicCopied = true
+                    Task {
+                        try? await Task.sleep(nanoseconds: 2_500_000_000)
+                        topicCopied = false
+                    }
                 } label: {
                     Label(topicCopied ? "Copied" : "Copy the topic", systemImage: topicCopied ? "checkmark" : "doc.on.doc")
                 }
-                Button {
-                    openURL(Self.ntfyApp)
-                } label: {
-                    Label("ntfy on the App Store", systemImage: "bell.badge")
+                Button { openURL(Self.ntfyApp) } label: {
+                    Label("ntfy on the App Store", systemImage: "arrow.up.right.square")
                 }
             } else {
-                Text(link.paired
-                     ? "Off in MailPilot. Turn them on there: Glasses, Notifications, Make a topic."
-                     : "Pair with MailPilot first.")
+                Text(shell.paired ? "Off in MailPilot: Glasses, Notifications, Make a topic." : "Pair with MailPilot first.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.muted)
             }
         } header: {
             Text("Notifications")
         } footer: {
-            Text(link.notify?.ownServer == nil
-                 ? "Off duty or with this app closed, MailPilot notifies you through the free ntfy app when an agent waits on you. Install ntfy, allow its notifications, then in ntfy: +, paste the topic, Subscribe. A notification only says what kind of thing waits; tap it to answer here. While you're on duty or have this app open, nothing is sent."
-                 : "Off duty or with this app closed, MailPilot notifies you through the free ntfy app when an agent waits on you. Install ntfy, allow its notifications, then in ntfy: +, paste the topic, choose Use another server and enter the server above, Subscribe. A notification only says what kind of thing waits; tap it to answer here. While you're on duty or have this app open, nothing is sent.")
+            Text(shell.notifyServer == nil
+                 ? "With this app closed, the ntfy app tells you when an agent waits. In ntfy: +, paste the topic, Subscribe."
+                 : "With this app closed, the ntfy app tells you when an agent waits. In ntfy: +, paste the topic, Use another server, Subscribe.")
         }
+        .listRowBackground(Theme.panel)
     }
 
     // MARK: Glasses
 
-    private var glassesSection: some View {
+    private var glasses: some View {
         Section {
-            LabeledContent("Meta AI app", value: glasses.registered ? "registered" : glasses.registration)
-            Text(glasses.deviceInfo).font(.footnote).foregroundStyle(.secondary)
-            if glasses.registered {
-                Button("Unregister", role: .destructive) { glasses.unregister() }
-            } else {
-                Button("Register with the Meta AI app") { glasses.register() }
+            row("eyeglasses", Theme.violet, "Meta AI app") {
+                Text(shell.glassesRegistered ? "registered" : shell.glassesRegistration).foregroundStyle(Theme.muted)
             }
-            Toggle("Show cards on the glasses", isOn: $settings.useLens)
-            if !glasses.status.isEmpty {
-                Text(glasses.status).font(.footnote).foregroundStyle(.secondary)
+            if !shell.glassesInfo.isEmpty {
+                Text(shell.glassesInfo).font(.footnote).foregroundStyle(Theme.muted)
+            }
+            if shell.glassesRegistered {
+                Button(role: .destructive) { shell.unregisterGlasses() } label: { Label("Unregister", systemImage: "xmark.circle") }
+            } else {
+                Button { shell.registerGlasses() } label: { Label("Register with the Meta AI app", systemImage: "arrow.up.forward.app") }
+            }
+            Toggle(isOn: $settings.useLens) { Label("Cards on the lens", systemImage: "rectangle.on.rectangle") }
+            if !shell.glassesStatus.isEmpty {
+                Text(shell.glassesStatus).font(.footnote).foregroundStyle(Theme.muted)
             }
         } header: {
             Text("Glasses")
         } footer: {
-            Text("Registering opens the Meta AI app once, to allow this app. It needs Developer Mode there: Settings, App Info, tap the version number five times. Without the glasses, the phone reads the cards and shows them on its own screen.")
+            Text("Registering needs Developer Mode in the Meta AI app: Settings, App Info, tap the version five times.")
         }
+        .listRowBackground(Theme.panel)
     }
 
     // MARK: Voice
 
-    private var voiceSection: some View {
+    private var voice: some View {
         Section {
-            Picker("Language", selection: $settings.language) {
+            Picker(selection: $settings.language) {
                 Text("The iPhone's").tag("auto")
                 Text("English").tag("en")
                 Text("Nederlands").tag("nl")
+            } label: {
+                Label("Language", systemImage: "globe")
             }
-            VStack(alignment: .leading) {
-                Text("Speaking speed")
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Speaking speed", systemImage: "speedometer")
                 Slider(value: $settings.speechRate, in: 0.7...1.5, step: 0.05)
             }
-            Toggle("Read a new card out loud", isOn: $settings.readCards)
-            Picker("Listens for an answer", selection: $settings.listenSeconds) {
-                Text("5 seconds").tag(5)
-                Text("8 seconds").tag(8)
-                Text("15 seconds").tag(15)
-                Text("30 seconds").tag(30)
+            Toggle(isOn: $settings.readCards) { Label("Read a new card out loud", systemImage: "speaker.wave.2") }
+            Picker(selection: $settings.listenSeconds) {
+                Text("5 s").tag(5)
+                Text("8 s").tag(8)
+                Text("15 s").tag(15)
+                Text("30 s").tag(30)
+            } label: {
+                Label("Listens for an answer", systemImage: "mic")
             }
-            Toggle("Answer over it", isOn: $settings.bargeIn)
-            if let speech = link.speech {
-                LabeledContent("Speech server", value: URL(string: speech.url)?.host ?? speech.url)
-                Button("Test the speech server") {
-                    speechCheck = "Asking…"
-                    SttClient.health(base: speech.url, key: speech.key) { text, _ in speechCheck = text }
+            Toggle(isOn: $settings.bargeIn) { Label("Answer over it", systemImage: "waveform") }
+            if let host = shell.speechHost {
+                row("waveform.badge.mic", Theme.cyan, "Speech server") { Text(host).foregroundStyle(Theme.muted).lineLimit(1) }
+                Button { shell.testSpeech() } label: { Label("Test the speech server", systemImage: "checkmark.circle") }
+                if !shell.speechCheck.isEmpty {
+                    Text(shell.speechCheck).font(.footnote).foregroundStyle(Theme.muted)
                 }
-                if !speechCheck.isEmpty { Text(speechCheck).font(.footnote).foregroundStyle(.secondary) }
             } else {
-                Text("No speech server yet: MailPilot sends its address when the phone is paired and on every connect.")
+                Text("No speech server yet: MailPilot sends it on every connect.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.muted)
             }
         } header: {
             Text("Voice")
         } footer: {
-            Text("A new card comes with a short sound and is read out; then the microphone listens this long for an answer. Say one of its answers (\"yes\", \"no\", \"build it\"), \"later\", \"why\" to hear it again, or \"next\". On a card that takes your own words, what you say is shown back first and only goes after \"send\". A yes is only ever taken from a card's own words, never guessed.\n\n\"Answer over it\" keeps listening while it reads: only useful when the microphone doesn't pick up the glasses' own speakers.")
+            Text("Say one of a card's answers, \"later\", \"why\" or \"next\". Your own words are shown back first and go after \"send\".")
         }
+        .listRowBackground(Theme.panel)
     }
 
     // MARK: Diagnostics
 
     private var diagnostics: some View {
         Section {
-            NavigationLink("Log") { LogView() }
-            ShareLink("Share the log", item: Log.shared.file)
-            LabeledContent("Version", value: Link.appVersion)
+            NavigationLink {
+                LogView()
+            } label: {
+                Label("Log", systemImage: "text.alignleft")
+            }
+            ShareLink(item: Log.shared.file) { Label("Share the log", systemImage: "square.and.arrow.up") }
+            row("info.circle", Theme.muted, "Version") { Text(shell.version).foregroundStyle(Theme.muted) }
         } header: {
             Text("Diagnostics")
         } footer: {
-            Text("The log holds what the app did and the words it heard. It holds no keys.")
+            Text("The log holds what the app did and the words it heard. No keys.")
+        }
+        .listRowBackground(Theme.panel)
+    }
+
+    /// A fact as a row: an icon in its colour, its name, and what it is on the right.
+    private func row<Value: View>(_ icon: String, _ color: Color, _ name: String, @ViewBuilder value: () -> Value) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 22)
+            Text(name)
+            Spacer(minLength: 8)
+            value()
         }
     }
 }
 
+/// The app's last lines, newest first.
 struct LogView: View {
     @ObservedObject private var log = Log.shared
 
@@ -198,11 +260,13 @@ struct LogView: View {
                 ForEach(Array(log.lines.enumerated().reversed()), id: \.offset) { _, line in
                     Text(line)
                         .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(Theme.muted)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(12)
         }
+        .background(Theme.bg)
         .navigationTitle("Log")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
